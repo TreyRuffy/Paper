@@ -1,0 +1,71 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: TreyRuffy <TreyRuffy@users.noreply.github.com>
+Date: Sat, 21 Aug 2021 16:03:14 -0600
+Subject: [PATCH] Flying Fall Damage
+
+
+diff --git a/src/main/java/com/destroystokyo/paper/PaperConfig.java b/src/main/java/com/destroystokyo/paper/PaperConfig.java
+index 2e0191e5cfe8e29fb0a6c4fc6a2a570d4b8ae449..6b146253dca87ee17195f3ed5926ec923fa91274 100644
+--- a/src/main/java/com/destroystokyo/paper/PaperConfig.java
++++ b/src/main/java/com/destroystokyo/paper/PaperConfig.java
+@@ -509,6 +509,10 @@ public class PaperConfig {
+     private static void loggerSettings() {
+         deobfuscateStacktraces = getBoolean("settings.loggers.deobfuscate-stacktraces", deobfuscateStacktraces);
+     }
++    public static boolean enableFlyingFallDamage = false;
++    private static void flyingFallDamage() {
++        enableFlyingFallDamage = getBoolean("settings.enable-flying-fall-damage", false);
++    }
+ 
+     public static int itemValidationDisplayNameLength = 8192;
+     public static int itemValidationLocNameLength = 8192;
+diff --git a/src/main/java/net/minecraft/world/entity/player/Player.java b/src/main/java/net/minecraft/world/entity/player/Player.java
+index d8780f06efc261a42389e466573a0bcf10c333f6..326a7291d37c15156004e50ab2e72c0e727567b1 100644
+--- a/src/main/java/net/minecraft/world/entity/player/Player.java
++++ b/src/main/java/net/minecraft/world/entity/player/Player.java
+@@ -1,5 +1,6 @@
+ package net.minecraft.world.entity.player;
+ 
++import com.destroystokyo.paper.PaperConfig; // Paper
+ import com.google.common.collect.ImmutableList;
+ import com.google.common.collect.ImmutableMap;
+ import com.google.common.collect.Lists;
+@@ -181,6 +182,7 @@ public abstract class Player extends LivingEntity {
+     public FishingHook fishing;
+     // Paper start
+     public boolean affectsSpawning = true;
++    public boolean flyingFallDamage = PaperConfig.enableFlyingFallDamage;
+     // Paper end
+ 
+     // CraftBukkit start
+@@ -1692,7 +1694,7 @@ public abstract class Player extends LivingEntity {
+ 
+     @Override
+     public boolean causeFallDamage(float fallDistance, float damageMultiplier, DamageSource damageSource) {
+-        if (this.abilities.mayfly) {
++        if (this.abilities.mayfly && !flyingFallDamage) { // Paper - flying fall damage
+             return false;
+         } else {
+             if (fallDistance >= 2.0F) {
+diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
+index bd7d5d8c03fdb836504ad733f137cb180aa1b029..33361b4c0b2115bb5e591fc5bb12e69dacd27945 100644
+--- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
++++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
+@@ -1788,6 +1788,17 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
+         this.getHandle().onUpdateAbilities();
+     }
+ 
++    // Paper start - flying fall damage
++    public void setFlyingFallDamage(boolean flyingFallDamage) {
++        getHandle().flyingFallDamage = flyingFallDamage;
++    }
++
++    @Override
++    public boolean hasFlyingFallDamage() {
++        return getHandle().flyingFallDamage;
++    }
++    // Paper end
++
+     @Override
+     public int getNoDamageTicks() {
+         if (this.getHandle().spawnInvulnerableTime > 0) {
