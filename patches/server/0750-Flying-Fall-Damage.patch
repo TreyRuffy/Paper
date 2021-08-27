@@ -5,7 +5,7 @@ Subject: [PATCH] Flying Fall Damage
 
 
 diff --git a/src/main/java/com/destroystokyo/paper/PaperConfig.java b/src/main/java/com/destroystokyo/paper/PaperConfig.java
-index 2e0191e5cfe8e29fb0a6c4fc6a2a570d4b8ae449..6b146253dca87ee17195f3ed5926ec923fa91274 100644
+index 2e0191e5cfe8e29fb0a6c4fc6a2a570d4b8ae449..f0258e16a5805686a0a5cff5fe20b4f9b7123a5b 100644
 --- a/src/main/java/com/destroystokyo/paper/PaperConfig.java
 +++ b/src/main/java/com/destroystokyo/paper/PaperConfig.java
 @@ -509,6 +509,10 @@ public class PaperConfig {
@@ -14,13 +14,13 @@ index 2e0191e5cfe8e29fb0a6c4fc6a2a570d4b8ae449..6b146253dca87ee17195f3ed5926ec92
      }
 +    public static boolean enableFlyingFallDamage = false;
 +    private static void flyingFallDamage() {
-+        enableFlyingFallDamage = getBoolean("settings.enable-flying-fall-damage", false);
++        enableFlyingFallDamage = getBoolean("settings.enable-flying-fall-damage", enableFlyingFallDamage);
 +    }
  
      public static int itemValidationDisplayNameLength = 8192;
      public static int itemValidationLocNameLength = 8192;
 diff --git a/src/main/java/net/minecraft/world/entity/player/Player.java b/src/main/java/net/minecraft/world/entity/player/Player.java
-index d8780f06efc261a42389e466573a0bcf10c333f6..326a7291d37c15156004e50ab2e72c0e727567b1 100644
+index d8780f06efc261a42389e466573a0bcf10c333f6..f7404b40c35b11f5f77517a71b864aeef49d5927 100644
 --- a/src/main/java/net/minecraft/world/entity/player/Player.java
 +++ b/src/main/java/net/minecraft/world/entity/player/Player.java
 @@ -1,5 +1,6 @@
@@ -38,7 +38,27 @@ index d8780f06efc261a42389e466573a0bcf10c333f6..326a7291d37c15156004e50ab2e72c0e
      // Paper end
  
      // CraftBukkit start
-@@ -1692,7 +1694,7 @@ public abstract class Player extends LivingEntity {
+@@ -856,6 +858,11 @@ public abstract class Player extends LivingEntity {
+         if (nbt.contains("ShoulderEntityRight", 10)) {
+             this.setShoulderEntityRight(nbt.getCompound("ShoulderEntityRight"));
+         }
++        // Paper start
++        if (nbt.contains("Paper.FlyingFallDamage")) {
++            this.flyingFallDamage = nbt.getBoolean("Paper.FlyingFallDamage");
++        }
++        // Paper end
+ 
+     }
+ 
+@@ -881,6 +888,7 @@ public abstract class Player extends LivingEntity {
+         if (!this.getShoulderEntityRight().isEmpty()) {
+             nbt.put("ShoulderEntityRight", this.getShoulderEntityRight());
+         }
++        nbt.putBoolean("Paper.FlyingFallDamage", this.flyingFallDamage); // Paper
+ 
+     }
+ 
+@@ -1692,7 +1700,7 @@ public abstract class Player extends LivingEntity {
  
      @Override
      public boolean causeFallDamage(float fallDistance, float damageMultiplier, DamageSource damageSource) {
